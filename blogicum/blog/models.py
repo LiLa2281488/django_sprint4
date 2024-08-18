@@ -1,19 +1,7 @@
 from django.db import models
-
-from django.utils import timezone
-
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
-
-class PublishedManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(
-            is_published=True,
-            pub_date__lte=timezone.now(),
-            category__is_published=True
-        )
 
 
 class PublishedModelMixin(models.Model):
@@ -22,12 +10,12 @@ class PublishedModelMixin(models.Model):
     is_published = models.BooleanField(
         default=True,
         help_text=(
-            'Снимите галочку, чтобы скрыть публикацию.'
+            "Снимите галочку, чтобы скрыть публикацию."
         ),
-        verbose_name='Опубликовано')
+        verbose_name="Опубликовано")
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name='Добавлено'
+        verbose_name="Добавлено"
     )
 
     class Meta:
@@ -35,30 +23,8 @@ class PublishedModelMixin(models.Model):
         ordering = ['-pub_date']
 
 
-class Category(PublishedModelMixin):
-    title = models.CharField(verbose_name="Заголовок", max_length=256)
-    description = models.TextField(verbose_name="Описание")
-    slug = models.SlugField(
-        unique=True,
-        help_text=(
-            "Идентификатор страницы для URL; "
-            "разрешены символы латиницы, цифры, дефис и подчёркивание."
-        ),
-        verbose_name="Идентификатор")
-
-    class Meta:
-        verbose_name = "категория"
-        verbose_name_plural = "Категории"
-
-    def __str__(self):
-        return self.title
-
-
 class Location(PublishedModelMixin):
-    name = models.CharField(
-        max_length=256,
-        verbose_name='Название места'
-    )
+    name = models.CharField(max_length=256, verbose_name='Название места')
 
     class Meta:
         verbose_name = 'местоположение'
@@ -68,53 +34,58 @@ class Location(PublishedModelMixin):
         return self.name
 
 
+class Category(PublishedModelMixin):
+    title = models.CharField(max_length=256, verbose_name='Заголовок')
+    description = models.TextField(verbose_name='Описание')
+    slug = models.SlugField(
+        unique=True,
+        verbose_name='Идентификатор',
+        help_text='Идентификатор страницы для URL; '
+                  'разрешены символы латиницы, цифры, дефис и подчёркивание.')
+
+    class Meta:
+        verbose_name = 'категория'
+        verbose_name_plural = 'Категории'
+
+    def __str__(self):
+        return self.title
+
+
 class Post(PublishedModelMixin):
-    title = models.CharField(
-        max_length=256,
-        verbose_name='Заголовок'
-    )
+    title = models.CharField(max_length=256, verbose_name='Заголовок')
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
         help_text=(
-            'Если установить дату и время в будущем '
-            '— можно делать отложенные публикации.'
+            "Если установить дату и время в будущем "
+            "— можно делать отложенные публикации."
         ),
-        verbose_name='Дата и время публикации')
+        verbose_name="Дата и время публикации")
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='posts',
-        verbose_name='Автор публикации'
+        related_name="posts",
+        verbose_name="Автор публикации"
     )
     location = models.ForeignKey(
         Location,
-        models.SET_NULL,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='posts',
+        related_name='post',
         verbose_name='Местоположение'
     )
     category = models.ForeignKey(
         Category,
-        models.SET_NULL,
+        on_delete=models.SET_NULL,
         null=True,
         blank=False,
-        related_name='posts',
+        related_name='post',
         verbose_name='Категория'
     )
     image = models.ImageField(
-        upload_to='media/',
-        blank=True,
-        verbose_name='Изображение'
-    )
-
-    comment_count = models.IntegerField(
-        default=0,
-        verbose_name='Количество комментариев'
-    )
-
-    objects = models.Manager()
-    published = PublishedManager()
+        'Изображение',
+        upload_to='posts_images',
+        blank=True)
 
     class Meta:
         verbose_name = 'публикация'
@@ -129,15 +100,19 @@ class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='comments',
+        related_name='comment',
+        verbose_name='публикация'
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True,
+                                      verbose_name='Добавлено')
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               verbose_name='Автор комментария')
 
     class Meta:
-        ordering = ('created_at',)
-        verbose_name = 'комментарий'
+        verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
+        ordering = ('created_at',)
 
     def __str__(self):
-        return self.text
+        return f"Комментарий пользователя {self.author}"

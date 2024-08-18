@@ -127,12 +127,16 @@ class PostDetailView(DetailView):
     def get_object(self, queryset=None):
         if self.request.user == Post.author:
             return get_object_or_404(
-                self.model.objects.select_related('location', 'author', 'category')
+                self.model.objects.select_related(
+                    'location', 'author', 'category'
+                )
                 .filter(
                     pub_date__lte=timezone.now()), pk=self.kwargs['id'])
         else:
             return get_object_or_404(
-                self.model.objects.select_related('location', 'author', 'category')
+                self.model.objects.select_related(
+                    'location', 'author', 'category'
+                )
                 .filter(
                     pub_date__lte=timezone.now(),
                     is_published=True,

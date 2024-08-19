@@ -10,12 +10,12 @@ class PublishedModelMixin(models.Model):
     is_published = models.BooleanField(
         default=True,
         help_text=(
-            "Снимите галочку, чтобы скрыть публикацию."
+            'Снимите галочку, чтобы скрыть публикацию.'
         ),
-        verbose_name="Опубликовано")
+        verbose_name='Опубликовано')
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name="Добавлено"
+        verbose_name='Добавлено'
     )
 
     class Meta:
@@ -56,15 +56,15 @@ class Post(PublishedModelMixin):
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
         help_text=(
-            "Если установить дату и время в будущем "
-            "— можно делать отложенные публикации."
+            'Если установить дату и время в будущем '
+            '— можно делать отложенные публикации.'
         ),
-        verbose_name="Дата и время публикации")
+        verbose_name='Дата и время публикации')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="posts",
-        verbose_name="Автор публикации"
+        related_name='posts',
+        verbose_name='Автор публикации'
     )
     location = models.ForeignKey(
         Location,
@@ -115,4 +115,4 @@ class Comment(models.Model):
         ordering = ('created_at',)
 
     def __str__(self):
-        return f"Комментарий пользователя {self.author}"
+        return f'Комментарий пользователя {self.author}'

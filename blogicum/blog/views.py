@@ -3,19 +3,18 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views.generic import (
-    ListView,
-    DetailView,
     CreateView,
-    UpdateView,
     DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
     View
 )
-from django.utils import timezone
 
-from .models import Post, Category, Comment
-
-from .forms import PostForm, CommentForm, ProfileEditForm
+from .forms import CommentForm, PostForm, ProfileEditForm
+from .models import Category, Comment, Post
 from .utils import get_post_data
 
 User = get_user_model()
@@ -36,7 +35,7 @@ class PostCreateView(PostMixin, LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('blog:profile', args=[self.request.user])
+        return reverse('blog:profile', args=[self.request.user.username])
 
 
 class PostUpdateView(PostMixin, LoginRequiredMixin, UpdateView):
@@ -67,7 +66,10 @@ class PostDeleteView(PostMixin, LoginRequiredMixin, DeleteView):
         return context
 
     def get_success_url(self):
-        return reverse('blog:profile', kwargs={'username': self.request.user})
+        return reverse(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
 
 
 class IndexListView(ListView):
@@ -118,7 +120,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def get_success_url(self):
-        return reverse('blog:profile', args=[self.request.user])
+        return reverse('blog:profile', args=[self.request.user.username])
 
 
 class PostDetailView(DetailView):
@@ -135,15 +137,14 @@ class PostDetailView(DetailView):
                 self.model.objects.select_related(
                     'location', 'author', 'category'
                 ), pk=self.kwargs['id'])
-        else:
-            return get_object_or_404(
-                self.model.objects.select_related(
-                    'location', 'author', 'category'
-                )
-                .filter(
-                    pub_date__lte=timezone.now(),
-                    is_published=True,
-                    category__is_published=True), pk=self.kwargs['id'])
+        return get_object_or_404(
+            self.model.objects.select_related(
+                'location', 'author', 'category'
+            )
+            .filter(
+                pub_date__lte=timezone.now(),
+                is_published=True,
+                category__is_published=True), pk=self.kwargs['id'])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -167,7 +168,7 @@ class CategoryPostsListView(ListView):
             is_published=True)
 
         return (
-            category.post.select_related('location', 'author', 'category')
+            category.posts.select_related('location', 'author', 'category')
             .filter(is_published=True,
                     pub_date__lte=timezone.now())
             .annotate(comment_count=Count('comment'))
@@ -193,7 +194,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        form.instance.post = self.post_obj
+        form.instance.post = self.post_obj                 # проверить
         return super().form_valid(form)
 
     def get_success_url(self):

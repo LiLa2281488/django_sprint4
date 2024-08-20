@@ -17,8 +17,7 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ['title__istartswith']
 
     def post_count(self, name):
-        counter = Post.objects.filter(category=name).count()
-        return counter
+        return Post.objects.filter(category=name).count()
 
 
 @admin.register(Location)

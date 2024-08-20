@@ -71,7 +71,7 @@ class Post(PublishedModelMixin):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='post',
+        related_name='posts',
         verbose_name='Местоположение'
     )
     category = models.ForeignKey(
@@ -79,7 +79,7 @@ class Post(PublishedModelMixin):
         on_delete=models.SET_NULL,
         null=True,
         blank=False,
-        related_name='post',
+        related_name='posts',
         verbose_name='Категория'
     )
     image = models.ImageField(
